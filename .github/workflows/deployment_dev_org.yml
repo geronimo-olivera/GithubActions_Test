@@ -1,0 +1,87 @@
+name: Validate against DEV Sandbox
+
+on:
+  push:
+    branches:
+      - feature/**
+      - staging-deploy/**
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      # Step 2: Setup NPM
+      - name: Setup NPM
+        uses: actions/setup-node@v3.0.0
+
+      # Step 3: Install Salesforce CLI
+      - name: Install SFDX
+        run: npm install -g @salesforce/cli
+
+      # Step 4: Set environment variables based on the developer
+      - name: Set environment variables for the developer
+        run: |
+          if [ "${{ github.actor }}" == "geronimo-olivera" ]; then
+          echo "Using credentials for oliverageronimo"
+          echo "SANDBOX_CLIENT_ID=${{ secrets.SALESFORCE_CONSUMER_KEY }}" >> $GITHUB_ENV
+          echo "SANDBOX_USERNAME=sfautouser@fundingcircle.com.alt20" >> $GITHUB_ENV
+          echo "SANDBOX_DX_ALIAS=OliveraUS" >> $GITHUB_ENV
+          elif [ "${{ github.actor }}" == "dpossiAltimetrik" ]; then
+          echo "Using credentials for dpossiAltimetrik"
+          echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_DENISE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "SANDBOX_USERNAME=${{ secrets.SFDC_DENISE_USERNAME }}" >> $GITHUB_ENV
+          echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_DENISE_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+          elif [ "${{ github.actor }}" == "fkleinman" ]; then
+          echo "Using credentials for fkleinman"
+          echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_FEDERICO_CLIENT_IDY }}" >> $GITHUB_ENV
+          echo "SANDBOX_USERNAME=${{ secrets.SFDC_FEDERICO_USERNAME }}" >> $GITHUB_ENV
+          echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_FEDERICO_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+          else
+          echo "Developer not recognized, skipping deployment."
+          exit 1
+          fi
+
+      # Step 5: Authenticate Org
+      - name: Authenticate Org
+        run: |
+          echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY }}" > server.key
+          sfdx force:auth:jwt:grant --client-id $SANDBOX_CLIENT_ID --username $SANDBOX_USERNAME --jwt-key-file server.key --instance-url https://test.salesforce.com --alias $SANDBOX_DX_ALIAS
+          rm server.key
+
+      # Step 6: Apply pre-deployment destructive changes
+      - name: Apply pre-deployment destructive changes
+        run: sf deploy metadata --manifest manifest/destructiveChangesPre.xml --target-org $SANDBOX_DX_ALIAS --verbose
+
+      # Step 7: Generate dynamic package.xml
+      - name: Generate package.xml
+        run: sfdx force:source:manifest:create -p "force-app"
+
+        # Step 7.1: List files to verify package.xml is generated
+      - name: List files in the project directory
+        run: ls -la
+
+        # Step 7.2: Print the content of package.xml
+      - name: Print the generated package.xml
+        run: cat package.xml
+
+        # Step 8.3: Ensure package.xml exists
+      - name: Verify package.xml exists
+        run: |
+          if [ -f package.xml ]; then
+              echo "package.xml exists."
+          else
+              echo "Error: package.xml not found."
+              exit 1
+          fi
+
+      # Step 9: Deploy to Salesforce Sandbox using the new CLI command
+      - name: Deploy to Salesforce
+        run: sf deploy metadata --manifest package.xml --target-org $SANDBOX_DX_ALIAS --test-level NoTestRun --wait 180 --verbose
+
+        # Step 10: Apply post-deployment destructive changes
+      - name: Apply post-deployment destructive changes
+        run: sf deploy metadata --manifest manifest/destructiveChangesPost.xml --target-org $SANDBOX_DX_ALIAS --verbose
