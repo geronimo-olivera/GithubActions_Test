@@ -93,7 +93,11 @@ jobs:
           sfdx force:auth:jwt:grant --client-id $SANDBOX_CLIENT_ID --username $SANDBOX_USERNAME --jwt-key-file server.key --instance-url https://test.salesforce.com --alias $SANDBOX_DX_ALIAS
           rm server.key
 
-      # Step 6: Pre-Deploy Destructive Changes
+      # Step 6: Debugging Step - List all files in the repository
+      - name: List files in the working directory
+        run: ls -al
+
+      # Step 7: Pre-Deploy Destructive Changes
       - name: Pre-Deploy Destructive Changes
         run: |
           if [ -f "destructiveChangesPre.xml" ]; then
@@ -103,11 +107,11 @@ jobs:
             echo "No pre-deploy destructive changes found."
           fi
 
-      # Step 7: Deploy to Salesforce environment
-        - name: Deploy to Salesforce
+      # Step 8: Deploy to Salesforce environment
+      - name: Deploy to Salesforce
         run: sf project deploy start --source-dir force-app --target-org $SANDBOX_DX_ALIAS
 
-      # Step 8: Post-Deploy Destructive Changes
+      # Step 9: Post-Deploy Destructive Changes
       - name: Post-Deploy Destructive Changes
         run: |
           if [ -f "destructiveChangesPost.xml" ]; then
