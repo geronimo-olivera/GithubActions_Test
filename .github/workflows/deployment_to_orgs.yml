@@ -68,20 +68,26 @@ jobs:
           sfdx force:auth:jwt:grant --client-id $SANDBOX_CLIENT_ID --username $SANDBOX_USERNAME --jwt-key-file server.key --instance-url https://test.salesforce.com --alias $SANDBOX_DX_ALIAS
           rm server.key
 
-      # Step 6: Deploy to Salesforce environment
+      # Step 6: Pre-Deploy Destructive Changes
+      - name: Pre-Deploy Destructive Changes
+        run: |
+          if [ -f "destructiveChangesPre.xml" ]; then
+            echo "Deploying pre-deploy destructive changes..."
+            sfdx force:source:deploy -x destructiveChangesPre.xml --targetusername $SANDBOX_DX_ALIAS
+          else
+            echo "No pre-deploy destructive changes found."
+          fi
+
+      # Step 7: Deploy to Salesforce environment
       - name: Deploy to Salesforce
         run: sf project deploy start --source-dir force-app --target-org $SANDBOX_DX_ALIAS
 
-      # Step 7: Pre-Deploy Destructive Changes
-      - name: Pre-Deploy Destructive Changes
-        if: exists('destructiveChangesPre.xml')
-        run: |
-          echo "Deploying pre-deploy destructive changes..."
-          sfdx force:source:deploy -x destructiveChangesPre.xml --targetusername $SANDBOX_DX_ALIAS
-
       # Step 8: Post-Deploy Destructive Changes
       - name: Post-Deploy Destructive Changes
-        if: exists('destructiveChangesPost.xml')
         run: |
-          echo "Deploying post-deploy destructive changes..."
-          sfdx force:source:deploy -x destructiveChangesPost.xml --targetusername $SANDBOX_DX_ALIAS
+          if [ -f "destructiveChangesPost.xml" ]; then
+            echo "Deploying post-deploy destructive changes..."
+            sfdx force:source:deploy -x destructiveChangesPost.xml --targetusername $SANDBOX_DX_ALIAS
+          else
+            echo "No post-deploy destructive changes found."
+          fi
