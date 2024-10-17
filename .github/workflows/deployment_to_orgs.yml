@@ -32,15 +32,23 @@ jobs:
       - name: Install SFDX
         run: npm install -g @salesforce/cli
 
-      # Step 4: Dynamically set environment variables using github.actor
+      # Step 4: Dynamically set environment variables using shell script
       - name: Set environment variables for the developer
         run: |
           echo "Dynamically setting environment variables based on the GitHub username (${GITHUB_ACTOR})"
 
-          # Set environment variables dynamically
-          echo "SANDBOX_CLIENT_ID=${{ secrets['SFDC_' + github.actor + '_CLIENT_ID'] }}" >> $GITHUB_ENV
-          echo "SANDBOX_USERNAME=${{ secrets['SFDC_' + github.actor + '_USERNAME'] }}" >> $GITHUB_ENV
-          echo "SANDBOX_DX_ALIAS=${{ secrets['SFDC_' + github.actor + '_SANDBOX_ALIAS'] }}" >> $GITHUB_ENV
+          # Convert GitHub actor to uppercase and replace '-' with '_'
+          ACTOR=$(echo "${{ github.actor }}" | tr '[:lower:]-' '[:upper:]_')
+
+          # Dynamically construct the secret names
+          CLIENT_ID="SFDC_${ACTOR}_CLIENT_ID"
+          USERNAME="SFDC_${ACTOR}_USERNAME"
+          SANDBOX_ALIAS="SFDC_${ACTOR}_SANDBOX_ALIAS"
+
+          # Export secrets as environment variables
+          echo "SANDBOX_CLIENT_ID=${{ secrets[CLIENT_ID] }}" >> $GITHUB_ENV
+          echo "SANDBOX_USERNAME=${{ secrets[USERNAME] }}" >> $GITHUB_ENV
+          echo "SANDBOX_DX_ALIAS=${{ secrets[SANDBOX_ALIAS] }}" >> $GITHUB_ENV
 
       # Step 5: Authenticate Org
       - name: Authenticate Org
