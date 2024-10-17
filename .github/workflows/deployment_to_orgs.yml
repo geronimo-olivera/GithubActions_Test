@@ -32,7 +32,7 @@ jobs:
       - name: Install SFDX
         run: npm install -g @salesforce/cli
 
-      # Step 4: Set environment variables for developer sandbox or environment
+      # Step 4: Set environment variables based on branch or developer
       - name: Set environment variables based on branch or developer
         run: |
           echo "Dynamically setting environment variables based on the branch and GitHub username (${GITHUB_ACTOR})"
@@ -93,30 +93,30 @@ jobs:
           sfdx force:auth:jwt:grant --client-id $SANDBOX_CLIENT_ID --username $SANDBOX_USERNAME --jwt-key-file server.key --instance-url https://test.salesforce.com --alias $SANDBOX_DX_ALIAS
           rm server.key
 
-      # Step 6: Debugging Step - List all files in the repository
+      # Step 6: List files in the working directory (for debugging)
       - name: List files in the working directory
         run: ls -al
 
       # Step 7: Pre-Deploy Destructive Changes
       - name: Pre-Deploy Destructive Changes
         run: |
-          if [ -f "destructiveChangesPre.xml" ]; then
+          if [ -f "force-app/manifest/destructiveChangesPre.xml" ]; then
             echo "Deploying pre-deploy destructive changes..."
-            sfdx force:source:deploy -x destructiveChangesPre.xml --targetusername $SANDBOX_DX_ALIAS
+            sfdx force:source:deploy -x force-app/manifest/destructiveChangesPre.xml --targetusername $SANDBOX_DX_ALIAS
           else
             echo "No pre-deploy destructive changes found."
           fi
 
       # Step 8: Deploy to Salesforce environment
-      - name: Deploy to Salesforce
+      - name: Deploy to Salesforce environment
         run: sf project deploy start --source-dir force-app --target-org $SANDBOX_DX_ALIAS
 
       # Step 9: Post-Deploy Destructive Changes
       - name: Post-Deploy Destructive Changes
         run: |
-          if [ -f "destructiveChangesPost.xml" ]; then
+          if [ -f "force-app/manifest/destructiveChangesPost.xml" ]; then
             echo "Deploying post-deploy destructive changes..."
-            sfdx force:source:deploy -x destructiveChangesPost.xml --targetusername $SANDBOX_DX_ALIAS
+            sfdx force:source:deploy -x force-app/manifest/destructiveChangesPost.xml --targetusername $SANDBOX_DX_ALIAS
           else
             echo "No post-deploy destructive changes found."
           fi
