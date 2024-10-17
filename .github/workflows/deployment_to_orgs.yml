@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - feature-jorge/**
-      - staging-deploy-jorge/**
-      - preprod-deploy-jorge/**
-      - fullcopy-deploy-jorge/**
-      - master-deploy-jorge/**
+      - staging-deploy/**
+      - preprod-deploy/**
+      - fullcopy-deploy/**
+      - master-deploy/**
   pull_request:
     branches:
       - staging
@@ -39,26 +39,25 @@ jobs:
 
           BRANCH=$(echo "${GITHUB_REF##*/}") # Get the current branch name
 
-          if [ "$BRANCH" == "staging" ]; then
-            echo "Deploying to Staging environment..."
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_STAGING_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_STAGING_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=Staging" >> $GITHUB_ENV
-          elif [ "$BRANCH" == "preprod" ]; then
-            echo "Deploying to PreProd environment..."
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_PREPROD_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_PREPROD_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=PreProd" >> $GITHUB_ENV
-          elif [ "$BRANCH" == "fullcopy" ]; then
-            echo "Deploying to FullCopy environment..."
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_FULLCOPY_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_FULLCOPY_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=FullCopy" >> $GITHUB_ENV
-          elif [ "$BRANCH" == "master" ]; then
-            echo "Deploying to Production environment..."
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_PROD_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_PROD_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=Production" >> $GITHUB_ENV
+          if [[ "$BRANCH" == "preprod" || "$BRANCH" == "master" || "$BRANCH" == "staging" || "$BRANCH" == "fullcopy" ]]; then
+            echo "Deploying to $BRANCH environment..."
+            if [ "$BRANCH" == "staging" ]; then
+              echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_STAGING_CLIENT_ID }}" >> $GITHUB_ENV
+              echo "SANDBOX_USERNAME=${{ secrets.SFDC_STAGING_USERNAME }}" >> $GITHUB_ENV
+              echo "SANDBOX_DX_ALIAS=Staging" >> $GITHUB_ENV
+            elif [ "$BRANCH" == "preprod" ]; then
+              echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_PREPROD_CLIENT_ID }}" >> $GITHUB_ENV
+              echo "SANDBOX_USERNAME=${{ secrets.SFDC_PREPROD_USERNAME }}" >> $GITHUB_ENV
+              echo "SANDBOX_DX_ALIAS=PreProd" >> $GITHUB_ENV
+            elif [ "$BRANCH" == "fullcopy" ]; then
+              echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_FULLCOPY_CLIENT_ID }}" >> $GITHUB_ENV
+              echo "SANDBOX_USERNAME=${{ secrets.SFDC_FULLCOPY_USERNAME }}" >> $GITHUB_ENV
+              echo "SANDBOX_DX_ALIAS=FullCopy" >> $GITHUB_ENV
+            elif [ "$BRANCH" == "master" ]; then
+              echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_PROD_CLIENT_ID }}" >> $GITHUB_ENV
+              echo "SANDBOX_USERNAME=${{ secrets.SFDC_PROD_USERNAME }}" >> $GITHUB_ENV
+              echo "SANDBOX_DX_ALIAS=Production" >> $GITHUB_ENV
+            fi
           else
             echo "Deploying to developer sandbox..."
 
@@ -105,7 +104,7 @@ jobs:
           fi
 
       # Step 7: Deploy to Salesforce environment
-      - name: Deploy to Salesforce
+        - name: Deploy to Salesforce
         run: sf project deploy start --source-dir force-app --target-org $SANDBOX_DX_ALIAS
 
       # Step 8: Post-Deploy Destructive Changes
