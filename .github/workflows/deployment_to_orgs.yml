@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - feature-jorge/**
-      - staging-deploy-jorge/**
-      - preprod-deploy-jorge/**
-      - fullcopy-deploy-jorge/**
-      - master-deploy-jorge/**
+      - staging-deploy/**
+      - preprod-deploy/**
+      - fullcopy-deploy/**
+      - master-deploy/**
   pull_request:
     branches:
       - staging
@@ -32,44 +32,32 @@ jobs:
       - name: Install SFDX
         run: npm install -g @salesforce/cli
 
-      # Step 4: Set environment variables dynamically
-      - name: Set environment variables based on branch or developer
+      # Step 4: Set environment variables dynamically using if conditions
+      - name: Set environment variables based on the developer
         run: |
-          if [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
-            echo "Running deployment for developer sandbox..."
-            
-            # Dynamically map secrets
-            export SANDBOX_CLIENT_ID="${{ secrets['SFDC_' + github.actor + '_CLIENT_ID'] }}"
-            export SANDBOX_USERNAME="${{ secrets['SFDC_' + github.actor + '_USERNAME'] }}"
-            export SANDBOX_DX_ALIAS="${{ secrets['SFDC_' + github.actor + '_SANDBOX_ALIAS'] }}"
-            
-            if [[ -z "$SANDBOX_CLIENT_ID" || -z "$SANDBOX_USERNAME" || -z "$SANDBOX_DX_ALIAS" ]]; then
-              echo "Developer credentials not found. Skipping deployment."
-              exit 1
-            fi
-
-          elif [[ "${{ github.ref }}" == refs/heads/staging-deploy/* ]]; then
-            echo "Setting environment for Staging deployment"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.STAGING_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.STAGING_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=Staging" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == refs/heads/preprod-deploy/* ]]; then
-            echo "Setting environment for PreProd deployment"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.PREPROD_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.PREPROD_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=PreProd" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == refs/heads/fullcopy-deploy/* ]]; then
-            echo "Setting environment for FullCopy deployment"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.FULLCOPY_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.FULLCOPY_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=FullCopy" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == refs/heads/master-deploy/* ]]; then
-            echo "Setting environment for Production deployment"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.PROD_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.PROD_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=Production" >> $GITHUB_ENV
+          echo "Setting environment variables for developer sandbox..."
+          if [ "${{ github.actor }}" == "jorge-username" ]; then
+            echo "Using credentials for Jorge"
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_JORGE_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_JORGE_USERNAME_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_JORGE_USERNAME_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+          elif [ "${{ github.actor }}" == "geronimo-username" ]; then
+            echo "Using credentials for Geronimo"
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_GERONIMO_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_GERONIMO_USERNAME_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_GERONIMO_USERNAME_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+          elif [ "${{ github.actor }}" == "viktor-username" ]; then
+            echo "Using credentials for Viktor"
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_VIKTOR_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_VIKTOR_USERNAME_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_VIKTOR_USERNAME_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+          elif [ "${{ github.actor }}" == "denise-username" ]; then
+            echo "Using credentials for Denise"
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_DENISE_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_DENISE_USERNAME_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_DENISE_USERNAME_SANDBOX_ALIAS }}" >> $GITHUB_ENV
           else
-            echo "Branch not recognized for deployment."
+            echo "Developer credentials not found. Skipping deployment."
             exit 1
           fi
 
@@ -80,16 +68,16 @@ jobs:
           sfdx force:auth:jwt:grant --client-id $SANDBOX_CLIENT_ID --username $SANDBOX_USERNAME --jwt-key-file server.key --instance-url https://test.salesforce.com --alias $SANDBOX_DX_ALIAS
           rm server.key
 
-      # Step 6: Pre-Deploy Destructive Changes
+      # Step 6: Deploy to Salesforce environment
+      - name: Deploy to Salesforce
+        run: sf project deploy start --source-dir force-app --target-org $SANDBOX_DX_ALIAS
+
+      # Step 7: Pre-Deploy Destructive Changes
       - name: Pre-Deploy Destructive Changes
         if: exists('destructiveChangesPre.xml')
         run: |
           echo "Deploying pre-deploy destructive changes..."
           sfdx force:source:deploy -x destructiveChangesPre.xml --targetusername $SANDBOX_DX_ALIAS
-
-      # Step 7: Deploy to Salesforce environment
-      - name: Deploy to Salesforce
-        run: sf project deploy start --source-dir force-app --target-org $SANDBOX_DX_ALIAS
 
       # Step 8: Post-Deploy Destructive Changes
       - name: Post-Deploy Destructive Changes
