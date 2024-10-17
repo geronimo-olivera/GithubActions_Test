@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - feature-jorge/**
-      - staging-deploy/**
-      - preprod-deploy/**
-      - fullcopy-deploy/**
-      - master-deploy/**
+      - staging-deploy-jorge/**
+      - preprod-deploy-jorge/**
+      - fullcopy-deploy-jorge/**
+      - master-deploy-jorge/**
   pull_request:
     branches:
       - staging
@@ -32,33 +32,59 @@ jobs:
       - name: Install SFDX
         run: npm install -g @salesforce/cli
 
-      # Step 4: Dynamically set environment variables using shell script and hardcoded secret names
-      - name: Set environment variables for the developer
+      # Step 4: Set environment variables for developer sandbox or environment
+      - name: Set environment variables based on branch or developer
         run: |
-          echo "Dynamically setting environment variables based on the GitHub username (${GITHUB_ACTOR})"
-          
-          # Convert GitHub actor to uppercase and replace '-' with '_'
-          ACTOR=$(echo "${{ github.actor }}" | tr '[:lower:]-' '[:upper:]_')
+          echo "Dynamically setting environment variables based on the branch and GitHub username (${GITHUB_ACTOR})"
 
-          if [ "$ACTOR" == "FKLEINMAN" ]; then
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_FKLEINMAN_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_FKLEINMAN_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_FKLEINMAN_SANDBOX_ALIAS }}" >> $GITHUB_ENV
-          elif [ "$ACTOR" == "GERONIMO" ]; then
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_GERONIMO_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_GERONIMO_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_GERONIMO_SANDBOX_ALIAS }}" >> $GITHUB_ENV
-          elif [ "$ACTOR" == "VIKTOR" ]; then
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_VIKTOR_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_VIKTOR_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_VIKTOR_SANDBOX_ALIAS }}" >> $GITHUB_ENV
-          elif [ "$ACTOR" == "DENISE" ]; then
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_DENISE_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_DENISE_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_DENISE_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+          BRANCH=$(echo "${GITHUB_REF##*/}") # Get the current branch name
+
+          if [ "$BRANCH" == "staging" ]; then
+            echo "Deploying to Staging environment..."
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_STAGING_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_STAGING_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=Staging" >> $GITHUB_ENV
+          elif [ "$BRANCH" == "preprod" ]; then
+            echo "Deploying to PreProd environment..."
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_PREPROD_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_PREPROD_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=PreProd" >> $GITHUB_ENV
+          elif [ "$BRANCH" == "fullcopy" ]; then
+            echo "Deploying to FullCopy environment..."
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_FULLCOPY_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_FULLCOPY_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=FullCopy" >> $GITHUB_ENV
+          elif [ "$BRANCH" == "master" ]; then
+            echo "Deploying to Production environment..."
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_PROD_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_PROD_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=Production" >> $GITHUB_ENV
           else
-            echo "Developer credentials not found. Skipping deployment."
-            exit 1
+            echo "Deploying to developer sandbox..."
+
+            # Convert GitHub actor to uppercase and replace '-' with '_'
+            ACTOR=$(echo "${{ github.actor }}" | tr '[:lower:]-' '[:upper:]_')
+
+            if [ "$ACTOR" == "FKLEINMAN" ]; then
+              echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_FKLEINMAN_CLIENT_ID }}" >> $GITHUB_ENV
+              echo "SANDBOX_USERNAME=${{ secrets.SFDC_FKLEINMAN_USERNAME }}" >> $GITHUB_ENV
+              echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_FKLEINMAN_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+            elif [ "$ACTOR" == "GERONIMO" ]; then
+              echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_GERONIMO_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
+              echo "SANDBOX_USERNAME=${{ secrets.SFDC_GERONIMO_USERNAME }}" >> $GITHUB_ENV
+              echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_GERONIMO_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+            elif [ "$ACTOR" == "VIKTOR" ]; then
+              echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_VIKTOR_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
+              echo "SANDBOX_USERNAME=${{ secrets.SFDC_VIKTOR_USERNAME }}" >> $GITHUB_ENV
+              echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_VIKTOR_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+            elif [ "$ACTOR" == "DENISE" ]; then
+              echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_DENISE_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
+              echo "SANDBOX_USERNAME=${{ secrets.SFDC_DENISE_USERNAME }}" >> $GITHUB_ENV
+              echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_DENISE_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+            else
+              echo "Developer credentials not found. Skipping deployment."
+              exit 1
+            fi
           fi
 
       # Step 5: Authenticate Org
