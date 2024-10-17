@@ -32,34 +32,15 @@ jobs:
       - name: Install SFDX
         run: npm install -g @salesforce/cli
 
-      # Step 4: Set environment variables dynamically using if conditions
-      - name: Set environment variables based on the developer
+      # Step 4: Dynamically set environment variables using github.actor
+      - name: Set environment variables for the developer
         run: |
-          echo "Setting environment variables for developer sandbox..."
-          if [ "${{ github.actor }}" == "fkleinman" ]; then
-            echo "Using credentials for Jorge"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_FKLEINMAN_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_FKLEINMAN_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_FKLEINMAN_SANDBOX_ALIAS }}" >> $GITHUB_ENV
-          elif [ "${{ github.actor }}" == "geronimo-username" ]; then
-            echo "Using credentials for Geronimo"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_GERONIMO_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_GERONIMO_USERNAME_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_GERONIMO_USERNAME_SANDBOX_ALIAS }}" >> $GITHUB_ENV
-          elif [ "${{ github.actor }}" == "viktor-username" ]; then
-            echo "Using credentials for Viktor"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_VIKTOR_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_VIKTOR_USERNAME_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_VIKTOR_USERNAME_SANDBOX_ALIAS }}" >> $GITHUB_ENV
-          elif [ "${{ github.actor }}" == "denise-username" ]; then
-            echo "Using credentials for Denise"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_DENISE_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_DENISE_USERNAME_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_DENISE_USERNAME_SANDBOX_ALIAS }}" >> $GITHUB_ENV
-          else
-            echo "Developer credentials not found. Skipping deployment."
-            exit 1
-          fi
+          echo "Dynamically setting environment variables based on the GitHub username (${GITHUB_ACTOR})"
+
+          # Set environment variables dynamically
+          echo "SANDBOX_CLIENT_ID=${{ secrets['SFDC_' + github.actor + '_CLIENT_ID'] }}" >> $GITHUB_ENV
+          echo "SANDBOX_USERNAME=${{ secrets['SFDC_' + github.actor + '_USERNAME'] }}" >> $GITHUB_ENV
+          echo "SANDBOX_DX_ALIAS=${{ secrets['SFDC_' + github.actor + '_SANDBOX_ALIAS'] }}" >> $GITHUB_ENV
 
       # Step 5: Authenticate Org
       - name: Authenticate Org
