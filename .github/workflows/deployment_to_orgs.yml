@@ -104,7 +104,7 @@ jobs:
           fi
 
       # Step 7: Deploy to Salesforce environment
-        - name: Deploy to Salesforce
+      - name: Deploy to Salesforce
         run: sf project deploy start --source-dir force-app --target-org $SANDBOX_DX_ALIAS
 
       # Step 8: Post-Deploy Destructive Changes
