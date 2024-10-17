@@ -38,9 +38,9 @@ jobs:
           echo "Setting environment variables for developer sandbox..."
           if [ "${{ github.actor }}" == "fkleinman" ]; then
             echo "Using credentials for Jorge"
-            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_JORGE_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
-            echo "SANDBOX_USERNAME=${{ secrets.SFDC_JORGE_USERNAME_USERNAME }}" >> $GITHUB_ENV
-            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_JORGE_USERNAME_SANDBOX_ALIAS }}" >> $GITHUB_ENV
+            echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_FKLEINMAN_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "SANDBOX_USERNAME=${{ secrets.SFDC_FKLEINMAN_USERNAME }}" >> $GITHUB_ENV
+            echo "SANDBOX_DX_ALIAS=${{ secrets.SFDC_FKLEINMAN_SANDBOX_ALIAS }}" >> $GITHUB_ENV
           elif [ "${{ github.actor }}" == "geronimo-username" ]; then
             echo "Using credentials for Geronimo"
             echo "SANDBOX_CLIENT_ID=${{ secrets.SFDC_GERONIMO_USERNAME_CLIENT_ID }}" >> $GITHUB_ENV
