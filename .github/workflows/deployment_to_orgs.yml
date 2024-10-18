@@ -107,12 +107,13 @@ jobs:
       - name: Deploy to Salesforce environment
         run: sf project deploy start --source-dir force-app --target-org $SANDBOX_DX_ALIAS
 
-      # Step 8: Post-Deploy Destructive Changes (with corrected XML declaration)
+      # Step 9: Post-Deploy Destructive Changes with new command
       - name: Post-Deploy Destructive Changes
         run: |
           if [ -f "force-app/manifest/destructiveChangesPost.xml" ]; then
             echo "Deploying post-deploy destructive changes..."
-            sfdx force:source:deploy -x force-app/manifest/destructiveChangesPost.xml --targetusername $SANDBOX_DX_ALIAS --checkonly
+          sf project deploy start --manifest force-app/manifest/destructiveChangesPost.xml --target-org $SANDBOX_DX_ALIAS
           else
             echo "No post-deploy destructive changes found."
           fi
+
