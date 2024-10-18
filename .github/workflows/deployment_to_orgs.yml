@@ -112,7 +112,7 @@ jobs:
         run: |
           if [ -f "force-app/manifest/destructiveChangesPost.xml" ]; then
             echo "Deploying post-deploy destructive changes..."
-            sfdx force:source:deploy -x force-app/manifest/destructiveChangesPost.xml --targetusername $SANDBOX_DX_ALIAS
+            sfdx force:source:deploy -x force-app/manifest/destructiveChangesPost.xml --targetusername $SANDBOX_DX_ALIAS --checkonly
           else
             echo "No post-deploy destructive changes found."
           fi
