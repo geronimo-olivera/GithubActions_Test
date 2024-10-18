@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+      - PreProd
+      - staging
+      - feature/**
+      - staging-deploy/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve repository source code.
+        uses: actions/checkout@v3
+
+      - name: Initialize Node.js environment.
+        uses: actions/setup-node@v3.0.0
+
+      - name: Install Salesforce CLI.
+        run: npm install -g @salesforce/cli
+
+      - name: Set GitHub actor environment variable
+        run: |
+          echo "GITHUB_ACTOR=${{ github.actor }}" >> $GITHUB_ENV
+
+      - name: Retrieve secrets dynamically based on GitHub actor
+        run: |
+          chmod +x ./scripts/retrieve_developer_secrets.sh
