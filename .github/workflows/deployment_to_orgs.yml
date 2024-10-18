@@ -112,8 +112,9 @@ jobs:
         run: |
           if [ -f "force-app/manifest/destructiveChangesPost.xml" ]; then
             echo "Deploying post-deploy destructive changes..."
-          sf project deploy start --manifest force-app/manifest/destructiveChangesPost.xml --target-org $SANDBOX_DX_ALIAS
+          sf project deploy start --manifest force-app/manifest/package.xml --destructive force-app/manifest/destructiveChangesPost.xml --target-org $SANDBOX_DX_ALIAS
           else
             echo "No post-deploy destructive changes found."
           fi
+
 
