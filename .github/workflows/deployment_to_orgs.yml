@@ -116,5 +116,3 @@ jobs:
           else
             echo "No post-deploy destructive changes found."
           fi
-
-

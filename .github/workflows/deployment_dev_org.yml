@@ -52,20 +52,39 @@ jobs:
           sfdx force:auth:jwt:grant --client-id $SANDBOX_CLIENT_ID --username $SANDBOX_USERNAME --jwt-key-file server.key --instance-url https://test.salesforce.com --alias $SANDBOX_DX_ALIAS
           rm server.key
 
-      # Step 6: Apply pre-deployment destructive changes
-      - name: Apply pre-deployment destructive changes
+      # Step: Generate dynamic package.xml
+      - name: Generate dynamic package.xml
+        run: sf project generate manifest -p force-app
+
+      # Step: Verify that package.xml exists
+      - name: Verify package.xml exists
         run: |
-          if [ -f "force-app/manifest/destructiveChangesPre.xml" ]; then
-            echo "Deploying pre-deploy destructive changes..."
-            sf deploy metadata --manifest force-app/manifest/destructiveChangesPre.xml --target-org $SANDBOX_DX_ALIAS --verbose
+          if [ -f "package.xml" ]; then
+            echo "package.xml generated successfully."
           else
-            echo "No pre-deploy destructive changes found."
+            echo "Error: package.xml not found."
+            exit 1
           fi
 
-      # Step 8: Deploy to Salesforce environment
-      - name: Deploy to Salesforce environment
-        run: sf project deploy start --source-dir force-app/main/default --target-org $SANDBOX_DX_ALIAS
+      # Step: Print the content of package.xml
+      - name: Print the generated package.xml
+        run: cat package.xml
 
-        # Step 10: Apply post-deployment destructive changes
-      - name: Apply post-deployment destructive changes
-        run: sf deploy metadata --manifest force-app/manifest/destructiveChangesPost.xml --target-org $SANDBOX_DX_ALIAS --verbose
+      # Step: Print the content of destructiveChangesPre.xml
+      - name: Print the destructiveChangesPre.xml
+        run: cat force-app/manifest/destructiveChangesPre.xml
+
+      # Step: Print the content of destructiveChangesPost.xml
+      - name: Print the destructiveChangesPost.xml
+        run: cat force-app/manifest/destructiveChangesPost.xml
+
+      # Step:
+      - name: Deploy
+        run: |
+          sf deploy metadata \
+           --manifest package.xml \
+           --pre-destructive-changes force-app/manifest/destructiveChangesPre.xml \
+           --post-destructive-changes force-app/manifest/destructiveChangesPost.xml \
+           --target-org $SANDBOX_DX_ALIAS \
+           --wait 60 \
+           --test-level NoTestRun
