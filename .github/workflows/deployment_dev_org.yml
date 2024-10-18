@@ -54,34 +54,18 @@ jobs:
 
       # Step 6: Apply pre-deployment destructive changes
       - name: Apply pre-deployment destructive changes
-        run: sf deploy metadata --manifest manifest/destructiveChangesPre.xml --target-org $SANDBOX_DX_ALIAS --verbose
-
-      # Step 7: Generate dynamic package.xml
-      - name: Generate package.xml
-        run: sfdx force:source:manifest:create -p "force-app"
-
-        # Step 7.1: List files to verify package.xml is generated
-      - name: List files in the project directory
-        run: ls -la
-
-        # Step 7.2: Print the content of package.xml
-      - name: Print the generated package.xml
-        run: cat package.xml
-
-        # Step 8.3: Ensure package.xml exists
-      - name: Verify package.xml exists
         run: |
-          if [ -f package.xml ]; then
-              echo "package.xml exists."
+          if [ -f "force-app/manifest/destructiveChangesPre.xml" ]; then
+            echo "Deploying pre-deploy destructive changes..."
+            sf deploy metadata --manifest force-app/manifest/destructiveChangesPre.xml --target-org $SANDBOX_DX_ALIAS --verbose
           else
-              echo "Error: package.xml not found."
-              exit 1
+            echo "No pre-deploy destructive changes found."
           fi
 
-      # Step 9: Deploy to Salesforce Sandbox using the new CLI command
-      - name: Deploy to Salesforce
-        run: sf deploy metadata --manifest package.xml --target-org $SANDBOX_DX_ALIAS --test-level NoTestRun --wait 180 --verbose
+      # Step 8: Deploy to Salesforce environment
+      - name: Deploy to Salesforce environment
+        run: sf project deploy start --source-dir force-app/main/default --target-org $SANDBOX_DX_ALIAS
 
         # Step 10: Apply post-deployment destructive changes
       - name: Apply post-deployment destructive changes
-        run: sf deploy metadata --manifest manifest/destructiveChangesPost.xml --target-org $SANDBOX_DX_ALIAS --verbose
+        run: sf deploy metadata --manifest force-app/manifest/destructiveChangesPost.xml --target-org $SANDBOX_DX_ALIAS --verbose
